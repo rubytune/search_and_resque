@@ -9,13 +9,16 @@ module SearchAndResque
 
     module ClassMethods
       def elastic_search_type
-        @elastic_search_type || Chewy::Index.subclasses.each do |ind|
+        return @elastic_search_type if @elastic_search_type
+
+        Chewy::Index.subclasses.each do |ind|
           ind.types.each do |type|
             if type.adapter.send(:model) == self
               return @elastic_search_type = type
             end
           end
         end
+        nil
       end
 
       def enqueue_elastic_search_update(ids)
