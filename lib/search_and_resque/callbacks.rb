@@ -3,7 +3,9 @@ module SearchAndResque
     extend ActiveSupport::Concern
 
     included do
-      attr_accessor :elastic_search_type
+      class << self
+        attr_accessor :elastic_search_type
+      end
       after_save :enqueue_elastic_search_update
       after_destroy :enqueue_elastic_search_delete
     end
