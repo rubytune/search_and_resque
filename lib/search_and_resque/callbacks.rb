@@ -3,24 +3,12 @@ module SearchAndResque
     extend ActiveSupport::Concern
 
     included do
+      attr_accessor :elastic_search_type
       after_save :enqueue_elastic_search_update
       after_destroy :enqueue_elastic_search_delete
     end
 
     module ClassMethods
-      def elastic_search_type
-        return @elastic_search_type if @elastic_search_type
-
-        Chewy::Index.subclasses.each do |ind|
-          ind.types.each do |type|
-            if type.adapter.send(:model) == self
-              return @elastic_search_type = type
-            end
-          end
-        end
-        nil
-      end
-
       def enqueue_elastic_search_update(ids)
         ids = Array(ids).map{ |x| x.is_a?(ActiveRecord::Base) ? x.id : x }
         SearchAndResque.queue.enqueue_update(elastic_search_type, ids)

@@ -16,11 +16,21 @@ module SearchAndResque
     @queue
   end
 
+  def self.index_name=(name)
+    @index_name = "#{name}"
+  end
+
+  def self.index_name
+    @index_name
+  end
+
   module ClassMethods
-    def search_and_resque(options={})
+    def search_and_resque(type_name, options={})
       unless included_modules.include?(SearchAndResque::Callbacks)
         options[:if] ||= ->{ true }
         define_method(:should_update_elastic_search?, &options[:if])
+
+        @elastic_search_type = "#{type_name}"
 
         include SearchAndResque::Callbacks
       end

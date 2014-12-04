@@ -10,15 +10,15 @@ module SearchAndResque
       type.send(action, ids)
     end
 
-    def self.enqueue_update(type, ids)
+    def self.enqueue_update(type_name, ids)
       unless ids.empty?
-        Resque.enqueue(self, type.index.index_name, type.type_name, :import!, ids)
+        Resque.enqueue(self, SearchAndResque.index_name, type_name, :import!, ids)
       end
     end
     
-    def self.enqueue_delete(type, ids)
+    def self.enqueue_delete(type_name, ids)
       unless ids.empty?
-        Resque.enqueue(self, type.index.index_name, type.type_name, :delete!, ids)
+        Resque.enqueue(self, SearchAndResque.index_name, type_name, :delete!, ids)
       end
     end
   end
