@@ -16,16 +16,16 @@ module SearchAndResque
     @queue
   end
 
-  def self.index_name=(name)
+  def self.chewy_index_name=(name)
     @index_name = "#{name}"
   end
 
-  def self.index_name
+  def self.chewy_index_name
     @index_name
   end
 
   def self.chewy_index
-    Object.const_get(index_name)
+    Object.const_get(chewy_index_name)
   end
 
   module ClassMethods

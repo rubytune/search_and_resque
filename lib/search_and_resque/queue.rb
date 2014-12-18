@@ -5,7 +5,8 @@ module SearchAndResque
     end
 
     def self.perform(type_name, action, ids)
-      type = SearchAndResque.index.types.find{ |t| t.type_name == type_name }
+      index = SearchAndResque.chewy_index
+      type = index.types.find{ |t| t.type_name == type_name }
       type.send(action, ids)
     end
 
