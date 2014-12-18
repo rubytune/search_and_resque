@@ -24,6 +24,10 @@ module SearchAndResque
     @index_name
   end
 
+  def self.chewy_index
+    Object.const_get(index_name)
+  end
+
   module ClassMethods
     def search_and_resque(type_name, options={})
       unless included_modules.include?(SearchAndResque::Callbacks)
