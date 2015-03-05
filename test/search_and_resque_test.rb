@@ -49,7 +49,7 @@ Chewy.configuration = {
   host: 'localhost:9200'
 }
 
-SearchAndResque.index_name = 'search_and_resque_test'
+SearchAndResque.chewy_index_name = :SearchAndResqueTestIndex
 SearchAndResque::Queue.queue = :search_and_resque_test_queue
 
 Resque.inline = true
