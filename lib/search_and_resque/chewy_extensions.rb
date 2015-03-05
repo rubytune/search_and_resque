@@ -5,7 +5,7 @@ module SearchAndResque
 
       module ClassMethods
         def delete!(ids)
-          filter(:term => {:_id => ids}).delete_all
+          filter(:ids => {:values => ids}).delete_all
         end
       end
     end
