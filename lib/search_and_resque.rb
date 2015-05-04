@@ -31,12 +31,24 @@ module SearchAndResque
   module ClassMethods
     def search_and_resque(type_name, options={})
       unless included_modules.include?(SearchAndResque::Callbacks)
+        @elastic_search_type = "#{type_name}"
+        class << self
+          attr_accessor :elastic_search_type
+        end
+
+        include SearchAndResque::Callbacks
+        after_save :enqueue_elastic_search_update
+        if options[:id]
+          after_destroy :enqueue_elastic_search_update
+        else
+          after_destroy :enqueue_elastic_search_delete
+        end
+
         options[:if] ||= ->{ true }
         define_method(:should_update_elastic_search?, &options[:if])
 
-        @elastic_search_type = "#{type_name}"
-
-        include SearchAndResque::Callbacks
+        options[:id] ||= ->{ id }
+        define_method(:elastic_search_id, &options[:id])
       end
     end
   end

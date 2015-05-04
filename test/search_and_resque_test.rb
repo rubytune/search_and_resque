@@ -20,8 +20,9 @@ end
 
 def setup!
   connect!
-  ActiveRecord::Base.connection.execute 'CREATE TABLE books (id INTEGER NOT NULL PRIMARY KEY, deleted_at DATETIME, title STRING)'
-  ActiveRecord::Base.connection.execute 'CREATE TABLE films (id INTEGER NOT NULL PRIMARY KEY, deleted_at DATETIME, title STRING, director STRING)'
+  ActiveRecord::Base.connection.execute 'CREATE TABLE books (id INTEGER NOT NULL PRIMARY KEY, title STRING)'
+  ActiveRecord::Base.connection.execute 'CREATE TABLE films (id INTEGER NOT NULL PRIMARY KEY, title STRING, director STRING)'
+  ActiveRecord::Base.connection.execute 'CREATE TABLE scores (id INTEGER NOT NULL PRIMARY KEY, film_id INTEGER NOT NULL, composer STRING)'
 end
 
 setup!
@@ -31,7 +32,13 @@ class Book < ActiveRecord::Base
 end
 
 class Film < ActiveRecord::Base
+  has_one :score
   search_and_resque :films, :if => ->{ title_changed? }
+end
+
+class Score < ActiveRecord::Base
+  belongs_to :film
+  search_and_resque :films, id: ->{ film_id }
 end
 
 class SearchAndResqueTestIndex < Chewy::Index
@@ -42,6 +49,7 @@ class SearchAndResqueTestIndex < Chewy::Index
   define_type Film, :name => 'films' do
     field :title
     field :director
+    field :score_composer, value: ->{ score.try(:composer) }
   end
 end
 
@@ -90,5 +98,15 @@ class SearchAndResqueTest < test_framework
 
     film.update_attributes(:title => 'three', :director => 'four')
     assert_equal 'four', SearchAndResqueTestIndex::Films.filter(:ids => {:values => [film.id]}).first.director
+  end
+
+  def test_cross_type_update_and_delete
+    film = Film.create(:title => 'one', :director => 'two')
+
+    score = film.create_score(composer: 'Howard Shore')
+    assert_equal 'Howard Shore', SearchAndResqueTestIndex::Films.filter(:ids => {values: [film.id]}).first.score_composer
+
+    score.destroy
+    assert_equal nil, SearchAndResqueTestIndex::Films.filter(:ids => {values: [film.id]}).first.score_composer
   end
 end

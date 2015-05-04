@@ -2,14 +2,6 @@ module SearchAndResque
   module Callbacks
     extend ActiveSupport::Concern
 
-    included do
-      class << self
-        attr_accessor :elastic_search_type
-      end
-      after_save :enqueue_elastic_search_update
-      after_destroy :enqueue_elastic_search_delete
-    end
-
     module ClassMethods
       def enqueue_elastic_search_update(ids)
         ids = Array(ids).map{ |x| x.is_a?(ActiveRecord::Base) ? x.id : x }
@@ -23,11 +15,13 @@ module SearchAndResque
     end
 
     def enqueue_elastic_search_update
-      self.class.enqueue_elastic_search_update(id) if should_update_elastic_search?
+      if should_update_elastic_search?
+        self.class.enqueue_elastic_search_update(elastic_search_id)
+      end
     end
 
     def enqueue_elastic_search_delete
-      self.class.enqueue_elastic_search_delete(id)
+      self.class.enqueue_elastic_search_delete(elastic_search_id)
     end
 
     # e.g.
