@@ -12,6 +12,42 @@ module SearchAndResque
         ids = Array(ids).map{ |x| x.is_a?(ActiveRecord::Base) ? x.id : x }
         SearchAndResque.queue.enqueue_delete(elastic_search_type, ids)
       end
+
+      # e.g.
+      #     Model.will_update_all(@records) do
+      #       ...
+      #       @records.update_all(...)
+      #       ...
+      #     end
+      def will_update_all(ids)
+        begin
+          skip_callback(:save, :after, :enqueue_elastic_search_update)
+          transaction do
+            yield if block_given?
+            enqueue_elastic_search_update(ids) unless ids.empty?
+          end
+        ensure
+          set_callback(:save, :after, :enqueue_elastic_search_update)
+        end
+      end
+
+      # e.g.
+      #     Model.will_delete_all(@records) do
+      #       ...
+      #       @records.delete_all
+      #       ...
+      #     end
+      def will_delete_all(ids)
+        begin
+          skip_callback(:destroy, :after, :enqueue_elastic_search_delete)
+          transaction do
+            yield if block_given?
+            enqueue_elastic_search_delete(ids) unless ids.empty?
+          end
+        ensure
+          set_callback(:destroy, :after, :enqueue_elastic_search_delete)
+        end
+      end
     end
 
     def enqueue_elastic_search_update
@@ -22,42 +58,6 @@ module SearchAndResque
 
     def enqueue_elastic_search_delete
       self.class.enqueue_elastic_search_delete(elastic_search_id)
-    end
-
-    # e.g.
-    #     Model.will_update_all(@records) do
-    #       ...
-    #       @records.update_all(...)
-    #       ...
-    #     end
-    def will_update_all(ids)
-      begin
-        skip_callback(:save, :after, :enqueue_elastic_search_update)
-        transaction do
-          yield if block_given?
-          enqueue_elastic_search_update(ids) unless ids.empty?
-        end
-      ensure
-        set_callback(:save, :after, :enqueue_elastic_search_update)
-      end
-    end
-    
-    # e.g.
-    #     Model.will_delete_all(@records) do
-    #       ...
-    #       @records.delete_all
-    #       ...
-    #     end
-    def will_delete_all(ids)
-      begin
-        skip_callback(:destroy, :after, :enqueue_elastic_search_delete)
-        transaction do
-          yield if block_given?
-          enqueue_elastic_search_delete(ids) unless ids.empty?
-        end
-      ensure
-        set_callback(:destroy, :after, :enqueue_elastic_search_delete)
-      end
     end
   end
 end

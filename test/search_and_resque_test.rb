@@ -109,4 +109,16 @@ class SearchAndResqueTest < test_framework
     score.destroy
     assert_equal nil, SearchAndResqueTestIndex::Films.filter(:ids => {values: [film.id]}).first.score_composer
   end
+
+  def test_will_delete_all
+    film1 = Film.create(:title => 'one', :director => 'two')
+    film2 = Film.create(:title => 'three', :director => 'four')
+
+    assert_equal 2, SearchAndResqueTestIndex::Films.total_count
+
+    Film.will_delete_all([film1, film2]) do
+    end
+
+    assert_equal 0, SearchAndResqueTestIndex::Films.total_count
+  end
 end
